@@ -28,8 +28,8 @@ class MyInstagramApi{
     
     
     
-    class func getUserData(code : String, complete : (errorDesc : String?, data : [String : AnyObject]?) -> Void){
-        let loginUrk = "https://api.instagram.com/oauth/access_token"
+    class func getUserData(code : String, complete : (errorDesc : String?, data : [String : String]?) -> Void){
+        let loginUrl = "https://api.instagram.com/oauth/access_token"
         let params = [
             "client_id" : clientID,
             "client_secret" : clientSecret,
@@ -39,14 +39,14 @@ class MyInstagramApi{
         
 
         
-        MyInstagramApi.sharedManager.POST(loginUrk, parameters: params, constructingBodyWithBlock: { (data) -> Void in
+        MyInstagramApi.sharedManager.POST(loginUrl, parameters: params, constructingBodyWithBlock: { (data) -> Void in
             println("data: \(data)")
             
             },
             success: { (operation, anyObj) -> Void in
                 
                 let jsonData = JSON(anyObj)
-                var tempDic = [String : AnyObject]()
+                var tempDic = [String : String]()
                 
                 if let dic = jsonData.dictionary{
                     println(dic)
@@ -75,8 +75,13 @@ class MyInstagramApi{
                     }
                 
                 }
-                
-            complete(errorDesc: nil, data: tempDic)
+                if tempDic["id"] == nil {
+                    complete(errorDesc: "some error please try again", data: nil)
+                }
+                else{
+                    complete(errorDesc: nil, data: tempDic)
+                    
+                }
                 
             })
             { (operation, error) -> Void in
@@ -86,6 +91,88 @@ class MyInstagramApi{
     }
     
     
+    
+    
+    
+    class func getUserDataFromNSURLSession(code : String, complete : (errorDesc : String?, data : [String : String]?) -> Void){
+        
+        
+        let loginUrl = "https://api.instagram.com/oauth/access_token"
+        let params = [
+            "client_id" : clientID,
+            "client_secret" : clientSecret,
+            "grant_type" : "authorization_code",
+            "redirect_uri" : redirectURI,
+            "code" : code] as Dictionary
+        
+        var request = NSMutableURLRequest(URL: NSURL(string: loginUrl)!)
+        var session = NSURLSession.sharedSession()
+        var err: NSError?
+        
+        request.HTTPMethod = "POST"
+        request.HTTPBody = NSJSONSerialization.dataWithJSONObject(params, options: nil, error: &err)
+        
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        
+        var task = session.dataTaskWithRequest(request, completionHandler: {data, response, error -> Void in
+            
+            println("Response: \(response)")
+            
+            var strData = NSString(data: data, encoding: NSUTF8StringEncoding)
+            
+            println("Body: \(strData)\n\n")
+            
+            if data != nil {
+                
+                let jsonData = JSON(data: data)
+                var tempDic = [String : String]()
+                
+                if let dic = jsonData.dictionary{
+                    println(dic)
+                    
+                    //If jsonData is .Dictionary
+                    for (key,subJson):(String, JSON) in dic {
+                        //If subJson is .Dictionary
+                        if let dic2 = subJson.dictionary{
+                            
+                            //If json is .Dictionary
+                            for (key1,subJson1):(String, JSON) in dic2 {
+                                
+                                if let valueString = subJson1.string{
+                                    tempDic[key1] = valueString
+                                }
+                                else if let valueInt = subJson1.number{
+                                    tempDic[key1] = valueInt.description
+                                }
+                            }
+                        }
+                        else{
+                            if let valueString = subJson.string{
+                                tempDic[key] = valueString
+                            }
+                        }
+                    }
+                    
+                }
+                if tempDic["id"] == nil {
+                    complete(errorDesc: "some error please try again", data: nil)
+                }
+                else{
+                    complete(errorDesc: nil, data: tempDic)
+
+                }
+            }
+            else if error != nil{
+                println("error: \(error.localizedDescription)")
+                complete(errorDesc: error.localizedDescription, data: nil)
+            }
+        })
+        
+        task.resume()
+    
+    }
     
     
     class func login(){
@@ -107,7 +194,7 @@ class MyInstagramApi{
                 
                 let code = openURL.description.stringByReplacingOccurrencesOfString("is\(clientID):?code=", withString: "")
                 
-                getUserData(code, complete: { (errorDesc, data) -> Void in
+                getUserDataFromNSURLSession(code, complete: { (errorDesc, data) -> Void in
                     
                     if errorDesc != nil {
                         self.delegate?.didUnSuccessfulLogin()
@@ -116,38 +203,16 @@ class MyInstagramApi{
                         self.delegate?.didSuccessfulLogin(data!)
                     }
                 })
-                
-                
-                
             }
                 // error
             else{
                 self.delegate?.didUnSuccessfulLogin()
             }
         }
-        
-        
+    
         return true
     }
     
     
-    
-    
-    
-    // helper func use less now
-    private static func checkLoginSuccess(openURL : String) -> Bool{
-        
-        let pattern2 = "is9d3292986f364e25836c819aef15b922:\\?code=\\w+"
-        
-        var error: NSError?
-        var internalExpression = NSRegularExpression(pattern: pattern2, options: NSRegularExpressionOptions.CaseInsensitive, error: &error)
-        
-        let matches = internalExpression?.matchesInString(openURL, options: nil, range:NSMakeRange(0, count(openURL)))
-        println(matches?.count)
-        
-        if matches?.count > 0{
-            return true
-        }
-        return false
-    }
+
 }
