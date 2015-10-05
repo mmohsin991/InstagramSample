@@ -8,11 +8,17 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, MyInstagramApiDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        MyInstagramApi.delegate = self
+
+        
+//        MyInstagramApi.getUserData()
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -21,5 +27,30 @@ class ViewController: UIViewController {
     }
 
 
+    
+    
+    
+    
+    func didSuccessfulLogin(data : [String : AnyObject]){
+        println("login successfull")
+        println(data)
+
+    }
+    func didUnSuccessfulLogin(){
+        println("login failed")
+    }
+    
+    
+    
+    @IBAction func login(sender: UIButton) {
+        
+        MyInstagramApi.login()
+        
+    }
+    
+    
+    
+    
+    
 }
 

@@ -43,6 +43,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Saves changes in the application's managed object context before the application terminates.
         self.saveContext()
     }
+    
+    
+    
+    
+    
+    func application(application: UIApplication, handleOpenURL url: NSURL) -> Bool {
+        println("handleOpenURL:  \(url)")
+        
+        return true
+    }
+    
+    func application(application: UIApplication, openURL url: NSURL, sourceApplication: String?, annotation: AnyObject?) -> Bool {
+        
+        MyInstagramApi.openURL(url)
+        
+        return true
+
+    }
+    
+    
+    
+    
+    
 
     // MARK: - Core Data stack
 
