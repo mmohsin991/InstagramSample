@@ -27,7 +27,7 @@ class MyInstagramApi{
     static var delegate : MyInstagramApiDelegate?
     
     
-    
+    // using AFNetworking
     class func getUserData(code : String, complete : (errorDesc : String?, data : [String : String]?) -> Void){
         let loginUrl = "https://api.instagram.com/oauth/access_token"
         let params = [
@@ -93,6 +93,7 @@ class MyInstagramApi{
     
     
     
+    // using NSURLSession
     
     class func getUserDataFromNSURLSession(code : String, complete : (errorDesc : String?, data : [String : String]?) -> Void){
         
@@ -194,7 +195,9 @@ class MyInstagramApi{
                 
                 let code = openURL.description.stringByReplacingOccurrencesOfString("is\(clientID):?code=", withString: "")
                 
-                getUserDataFromNSURLSession(code, complete: { (errorDesc, data) -> Void in
+                // using NSURLSession or AFNetworking (func : getUserData())
+
+                getUserData(code, complete: { (errorDesc, data) -> Void in
                     
                     if errorDesc != nil {
                         self.delegate?.didUnSuccessfulLogin()
